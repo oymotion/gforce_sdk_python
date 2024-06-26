@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = [
     {name = "Bernhard Specht", email = "bernhard.specht@myelinh.com"},
+    {name = "He Bin", email = "hebin@oymotion.com"},
 ]
 dependencies = [
     "bleak>=0.20.2",
