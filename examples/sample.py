@@ -58,6 +58,16 @@ class Application:
         await gforce_device.connect()
         print("Connected to {0}".format(gforce_device.device_name))
 
+        await gforce_device.set_motor(True)
+        await asyncio.sleep(2)
+        await gforce_device.set_motor(False)
+        await asyncio.sleep(2)
+
+        await gforce_device.set_led(True)
+        await asyncio.sleep(2)
+        await gforce_device.set_led(False)
+        await asyncio.sleep(2)
+
         await gforce_device.set_emg_raw_data_config(
             gforce.EmgRawDataConfig(
                 gforce.SamplingRate.HZ_500, 0xFF, 16, gforce.SampleResolution.BITS_12

@@ -544,13 +544,6 @@ class GForce:
             )
         )
 
-    async def switch_to_oad(self):
-        await self._send_request(
-            Request(
-                cmd=Command.SWITCH_TO_OAD,
-                has_res=False,
-            )
-        )
 
     async def system_reset(self):
         await self._send_request(
@@ -560,69 +553,46 @@ class GForce:
             )
         )
 
-    async def switch_service(self):
-        await self._send_request(
-            Request(
-                cmd=Command.SWITCH_SERVICE,
-                has_res=False,
-            )
-        )
 
-    async def set_motor(self):  # TODO: check if this works and what it does
-        await self._send_request(
+    async def set_motor(self, switchStatus):
+        body = [
+            switchStatus == True
+        ]
+        body = bytes(body)
+        ret = await self._send_request(
             Request(
                 cmd=Command.MOTOR_CONTROL,
+                body=body,
                 has_res=True,
             )
         )
 
-    async def set_led(self):  # TODO: check if this works and what it does
-        await self._send_request(
+    async def set_led(self, switchStatus):
+        body = [
+            switchStatus == True
+        ]
+        body = bytes(body)
+        ret = await self._send_request(
             Request(
                 cmd=Command.LED_CONTROL_TEST,
+                body=body,
                 has_res=True,
             )
         )
 
-    async def set_log_level(self):
-        await self._send_request(
+    async def set_log_level(self, logLevel):
+        body = [
+            0xFF & logLevel
+        ]
+        body = bytes(body)
+        ret = await self._send_request(
             Request(
                 cmd=Command.SET_LOG_LEVEL,
-                has_res=False,
-            )
-        )
-
-    async def set_log_module(self):
-        await self._send_request(
-            Request(
-                cmd=Command.SET_LOG_MODULE,
-                has_res=False,
-            )
-        )
-
-    async def print_kernel_msg(self):
-        await self._send_request(
-            Request(
-                cmd=Command.PRINT_KERNEL_MSG,
+                body=body,
                 has_res=True,
             )
         )
 
-    async def set_package_id(self):
-        await self._send_request(
-            Request(
-                cmd=Command.PACKAGE_ID_CONTROL,
-                has_res=False,
-            )
-        )
-
-    async def send_training_package(self):
-        await self._send_request(
-            Request(
-                cmd=Command.SEND_TRAINING_PACKAGE,
-                has_res=False,
-            )
-        )
 
     async def set_emg_raw_data_config(self, cfg=EmgRawDataConfig()):
         body = cfg.to_bytes()
@@ -633,6 +603,9 @@ class GForce:
                 has_res=True,
             )
         )
+
+        # print('_send_request returned:', ret)
+
         self.resolution = cfg.resolution
 
         num_channels = 0
