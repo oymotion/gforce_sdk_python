@@ -13,6 +13,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from lib_gforce import gforce
+from lib_gforce.gforce import EmgRawDataConfig, SampleResolution
 
 # Degree of freedom settings, modify EXTRA_FINGERS to distinguish between 5 DOF and 6 DOFgloves.
 NUM_FINGERS = 5
@@ -21,6 +22,9 @@ EXTRA_FINGERS = 1
 # Device filters
 DEV_NAME_PREFIX = "gForceBLE"
 DEV_MIN_RSSI = -64
+
+# sample resolution:BITS_8 or BITS_12
+SAMPLE_RESOLUTION = 12
 
 NUM_CHANNELS = NUM_FINGERS + EXTRA_FINGERS
 # Channel0: thumb, Channel1: index, Channel2: middle, Channel3: ring, Channel4: pinky, Channel5: thumb root
@@ -81,12 +85,12 @@ class Application:
         Continuously retrieves and prints the battery level of the gForce device.
 
         This method runs in a separate thread and periodically queries the device for its current battery level.
-        It continues to do so until the terminated is set, indicating that the thread should terminate.
+        It continues to do so until the terminated is set, indicating that the task should terminate.
 
         Args:
             self: The instance of the Application class.
         """
-        # 循环，直到stop_event被设置
+        # 循环直到终止
         while not self.terminated:
             # 获取电池电量
             self.battery_level = await self.gforce_device.get_battery_level()
@@ -103,8 +107,8 @@ class Application:
 
         This method initializes the data arrays for EMG data, minimum and maximum EMG values, and finger data.
         It then attempts to connect to the gForce device, sets the subscription to EMG raw data, and starts streaming data.
-        It calibrates the EMG data by collecting 256 samples of data while the user spreads their fingers and makes a fist.
-        It then creates a new thread to continuously retrieve and print the battery level of the device.
+        It calibrates the EMG data by collecting 256 samples of data while the user spreads their fingers, makes a fist and rotate thumb root.
+        It then creates a new task to continuously retrieve and print the battery level of the device.
         Finally, it enters a loop to continuously process the streaming data, interpolate and clamp the finger data, and print the results.
         The loop continues until the `terminated` flag is set, at which point it stops streaming and disconnects from the device.
 
@@ -126,6 +130,11 @@ class Application:
             exit(-1)
 
         print("Connected to {0}".format(self.gforce_device.device_name))
+
+        # Set the EMG raw data configuration, default configuration is 8 bits, 16 batch_len
+        if SAMPLE_RESOLUTION == 12:
+            cfg = EmgRawDataConfig(fs=100, channel_mask=0xff, batch_len = 8, resolution = SampleResolution.BITS_12)
+            await self.gforce_device.set_emg_raw_data_config(cfg)
 
         await self.gforce_device.set_subscription(gforce.DataSubscription.EMG_RAW)
         q = await self.gforce_device.start_streaming()
@@ -171,7 +180,7 @@ class Application:
 
         while not self.terminated:
             v = await q.get()
-            # print(v)
+            print(v)
 
             for i in range(len(v)):
                 for j in range(NUM_CHANNELS):
@@ -179,7 +188,7 @@ class Application:
                     finger_data[j] = round(interpolate(emg_data[j], emg_min[j], emg_max[j], 65535, 0))
                     finger_data[j] = clamp(finger_data[j], 0, 65535)
 
-            print(finger_data)
+            # print(finger_data)
 
         await battery_task  # 等待后台任务结束
         await self.gforce_device.stop_streaming()
