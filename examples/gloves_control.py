@@ -56,8 +56,6 @@ class Application:
         signal.signal(signal.SIGINT, lambda signal, frame: self._signal_handler())
         # 初始化terminated为False
         self.terminated = False
-        # 初始化stop_event为asyncio.Event()
-        self.stop_event = asyncio.Event()
         # 初始化gforce_device为gforce.GForce(DEV_NAME_PREFIX, DEV_MIN_RSSI)
         self.gforce_device = gforce.GForce(DEV_NAME_PREFIX, DEV_MIN_RSSI)
         # 初始化battery_level为0
@@ -78,18 +76,18 @@ class Application:
         # 设置终止标志为True
         self.terminated = True
 
-    async def get_battery_level(self, stop_event):
+    async def get_battery_level(self):
         """
         Continuously retrieves and prints the battery level of the gForce device.
 
         This method runs in a separate thread and periodically queries the device for its current battery level.
-        It continues to do so until the provided stop_event is set, indicating that the thread should terminate.
+        It continues to do so until the terminated is set, indicating that the thread should terminate.
 
         Args:
-            stop_event (asyncio.Event): An event object used to signal the thread to stop.
+            self: The instance of the Application class.
         """
         # 循环，直到stop_event被设置
-        while not stop_event.is_set():
+        while not self.terminated:
             # 获取电池电量
             self.battery_level = await self.gforce_device.get_battery_level()
             # 打印电池电量
@@ -97,7 +95,7 @@ class Application:
             # 等待1秒，非阻塞
             await asyncio.sleep(1)
 
-        print("Battery level thread stopped")
+        print("Battery level thread stopped.")
 
     async def main(self):
         """
@@ -168,9 +166,8 @@ class Application:
         for i in range(NUM_CHANNELS):
             print("MIN/MAX of finger {0}: {1}-{2}".format(i, emg_min[i], emg_max[i]))
 
-        # Create a new thread
-        # await asyncio.to_thread(self.get_battery_level, self.stop_event)
-        battery_task = asyncio.create_task(self.get_battery_level(self.stop_event))
+        # Create a new task
+        battery_task = asyncio.create_task(self.get_battery_level())
 
         while not self.terminated:
             v = await q.get()
@@ -184,11 +181,12 @@ class Application:
 
             print(finger_data)
 
-        self.stop_event.set()
         await battery_task  # 等待后台任务结束
         await self.gforce_device.stop_streaming()
         await self.gforce_device.disconnect()
 
+        print("Disconnected from {0}.".format(self.gforce_device.device_name))
+        print("Terminated.")
 
 if __name__ == "__main__":
     app = Application()
