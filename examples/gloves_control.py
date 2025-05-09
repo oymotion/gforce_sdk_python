@@ -21,7 +21,7 @@ EXTRA_FINGERS = 1
 
 # Device filters
 DEV_NAME_PREFIX = "gForceBLE"
-DEV_MIN_RSSI = -64
+DEV_MIN_RSSI = -128
 
 # sample resolution:BITS_8 or BITS_12
 SAMPLE_RESOLUTION = 12

@@ -74,7 +74,7 @@ class Application:
             )
         )
         await gforce_device.set_subscription(
-            gforce.DataSubscription.EMG_RAW | gforce.DataSubscription.ACCELERATE
+            gforce.DataSubscription.EMG_RAW
         )
 
         q = await gforce_device.start_streaming()
