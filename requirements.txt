@@ -2,5 +2,4 @@
 # Please do not edit it manually.
 
 bleak==0.22.3
-bleak-winrt==1.2.0
 numpy==1.26.4
